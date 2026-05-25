@@ -1,44 +1,47 @@
-# CycloneDX Agent System Profile
+# Agentic-System Bill of Materials (ASBOM)
 
 **Status:** Draft v0.1
-**Target spec:** CycloneDX 1.7
+**Type:** Proposed new CycloneDX BOM type, alongside SBOM, ML-BOM, SaaSBOM, CBOM, HBOM, OBOM, MBOM
+**Target spec:** CycloneDX 1.7 (with proposed [`principal`](./proposal-principal-field.md) field addition)
 **Author:** Markus Hupfauer
 **Date:** 2026-05-25
 
 ## 1. Scope
 
-This profile defines a usage convention on top of CycloneDX 1.7 for describing **agent systems**: bounded compositions of one or more AI models, a host application ("harness") that drives them, zero or more installed skills, zero or more invoked MCP servers, a runtime/sandbox environment, and the identities under which each of those components executes.
+This document specifies **Agentic-System Bill of Materials (ASBOM)** — a CycloneDX BOM type for describing the runtime composition of an *agentic system*: a bounded set of one or more AI models, a host application ("harness") that drives them, zero or more installed skills, zero or more invoked MCP servers, a runtime/sandbox environment, and the identities under which each of those components executes.
 
-It is a *profile*, not a new specification. With one optional extension (the [`principal` proposal](./proposal-principal-field.md)) it is expressible entirely in CycloneDX 1.7 primitives. The profile defines:
+ASBOM stands alongside the existing CycloneDX BOM types — SBOM (software), ML-BOM (model + training), SaaSBOM (service surfaces), CBOM (cryptographic assets) — and inventories the unit that none of them currently capture: the *running composition*. Where ML-BOM answers "what is this model and how was it trained," and SaaSBOM answers "what services and data flows exist," ASBOM answers "what composition is executing *right now*, under whose authority, with what reversibility, and with what non-repudiation properties."
 
-- a component taxonomy mapping agent-system parts to existing CycloneDX `component` and `service` types,
+ASBOM is expressible entirely in CycloneDX 1.7 primitives with one schema addition (the [`principal`](./proposal-principal-field.md) block). It defines:
+
+- a component taxonomy mapping agentic-system parts to existing CycloneDX `component` and `service` types,
 - a composition pattern using `compositions` and `formulation`,
 - attestation rules using `declarations`,
 - signing requirements,
 - and naming conventions for the `properties` bag.
 
-It does not introduce new top-level fields. It does cite the proposed `principal` block for component/service identity; consumers that have not adopted that proposal can substitute a `properties` namespace as described in §5.4.
+Consumers that have not adopted the `principal` proposal can substitute a `properties` namespace as described in §5.4.
 
 ## 2. Motivation
 
-CycloneDX ML-BOM describes the *model*. CycloneDX SaaSBOM describes a *service surface*. Neither describes the **running composition** that determines what an agent can actually do: which model, loaded in which harness, with which skills installed, executing in which runtime, under which credentials.
+CycloneDX ML-BOM describes the *model*. CycloneDX SaaSBOM describes a *service surface*. Neither describes the **running composition** that determines what an agentic system can actually do: which model, loaded in which harness, with which skills installed, executing in which runtime, under which credentials.
 
-That composition is the unit operators must audit, sign, attest, and respond to in an incident. Today it has no home in the schema. This profile gives it one without inventing a new format.
+That composition is the unit operators must audit, sign, attest, and respond to in an incident. Today it has no home in the schema. ASBOM gives it one without inventing a new format — reusing CycloneDX 1.7 primitives plus one schema addition (`principal`) for runtime identity.
 
 ## 3. Conformance
 
-A document conforms to this profile if:
+A document conforms to ASBOM v0.1 if:
 
 1. It is a valid CycloneDX 1.7 BOM.
-2. Its `metadata.properties` contains `cdx:profile = "agent-system"` with the profile version, e.g., `cdx:profile:agent-system:version = "0.1"`.
-3. It contains at least one `composition` of `aggregate: complete` (or `complete_with_exceptions`) that enumerates the agent system's runtime parts.
-4. Each component or service that *executes code under some identity* carries either a `principal` block (preferred) or a `cdx:agent:principal:*` properties namespace (fallback; see §5.4).
+2. Its `metadata.properties` contains `cdx:bomType = "asbom"` and `cdx:asbom:version = "0.1"`.
+3. It contains at least one `composition` of `aggregate: complete` (or `complete_with_exceptions`) that enumerates the agentic system's runtime parts.
+4. Each component or service that *executes code under some identity* carries either a `principal` block (preferred) or a `cdx:asbom:principal:*` properties namespace (fallback; see §5.4).
 
-A document MAY include additional CycloneDX content unrelated to the agent system; only the conforming composition needs to satisfy this profile.
+A document MAY include additional CycloneDX content unrelated to the agentic system; only the conforming composition needs to satisfy ASBOM.
 
 ## 4. Component taxonomy
 
-The profile maps agent-system parts to existing CycloneDX 1.7 types as follows. Where multiple types would be defensible, the profile picks one to keep producers and consumers aligned.
+The profile maps agentic-system parts to existing CycloneDX 1.7 types as follows. Where multiple types would be defensible, the profile picks one to keep producers and consumers aligned.
 
 ### 4.1 Model
 
@@ -48,8 +51,8 @@ CycloneDX `component.type = "machine-learning-model"` with a `modelCard`. No new
 
 The CLI, IDE, or desktop application that loads the model, loads skills, mediates tool calls, and presents the UI to the user. Modeled as `component.type = "application"` with:
 
-- `properties."cdx:agent:role" = "harness"`
-- `properties."cdx:agent:harness:vendor"` (e.g., `anthropic`, `cursor`, `github`)
+- `properties."cdx:asbom:role" = "harness"`
+- `properties."cdx:asbom:harness:vendor"` (e.g., `anthropic`, `cursor`, `github`)
 
 Examples: Claude Code CLI, Cursor, Gemini CLI, the GitHub CLI in `gh copilot` mode.
 
@@ -59,10 +62,10 @@ The harness MUST declare a `principal` describing the OS-level identity it runs 
 
 An installed agent capability — a SKILL.md package, an Anthropic plugin, a Cursor extension, etc. Modeled as `component.type = "application"` with:
 
-- `properties."cdx:agent:role" = "skill"`
-- `properties."cdx:agent:skill:format"` (e.g., `agentskills.io/0.1`, `anthropic-plugin/1.0`)
-- `properties."cdx:agent:skill:source"` (URL or registry URI the skill was installed from)
-- `properties."cdx:agent:skill:digest"` (full content hash; SHOULD use `hashes` array as well)
+- `properties."cdx:asbom:role" = "skill"`
+- `properties."cdx:asbom:skill:format"` (e.g., `agentskills.io/0.1`, `anthropic-plugin/1.0`)
+- `properties."cdx:asbom:skill:source"` (URL or registry URI the skill was installed from)
+- `properties."cdx:asbom:skill:digest"` (full content hash; SHOULD use `hashes` array as well)
 
 A skill MAY declare a `principal`. Skills that execute under the harness's ambient identity SHOULD set `principal.mode = "delegated-ambient"` and `principal.subject.ref` to the harness's `bom-ref` — making the inheritance explicit rather than implicit.
 
@@ -70,8 +73,8 @@ A skill MAY declare a `principal`. Skills that execute under the harness's ambie
 
 An MCP server invoked by the harness or by a skill. Modeled as `service`, not `component`, even when colocated with the harness, because MCP is fundamentally a protocol-mediated service surface. Properties:
 
-- `properties."cdx:agent:role" = "mcp-server"`
-- `properties."cdx:agent:mcp:transport"` (e.g., `stdio`, `http+sse`, `streamable-http`)
+- `properties."cdx:asbom:role" = "mcp-server"`
+- `properties."cdx:asbom:mcp:transport"` (e.g., `stdio`, `http+sse`, `streamable-http`)
 - `endpoints` MUST list every endpoint the server exposes; if `stdio`, use a synthetic `stdio://` URI naming the binary.
 
 An MCP server MUST declare a `principal`. This is the field that distinguishes a token-passthrough shim from a properly OBO-flow server (see [the principal proposal §3](./proposal-principal-field.md#axis-1--attribution-mode-who-the-audit-log-records-as-the-actor)).
@@ -80,7 +83,7 @@ An MCP server MUST declare a `principal`. This is the field that distinguishes a
 
 Any external service the model, harness, skill, or MCP server calls — including the model's own API endpoint when the model is hosted. Modeled as `service` with:
 
-- `properties."cdx:agent:role" = "external-api"`
+- `properties."cdx:asbom:role" = "external-api"`
 - `services.endpoints` listing the calling endpoint(s)
 - `services.data` describing classification and direction
 - `services.trustZone` set to a meaningful name (e.g., `public-internet`, `vendor-saas`, `internal`)
@@ -91,14 +94,14 @@ These services SHOULD NOT carry a `principal` block — the principal lives on w
 
 The sandbox, user account, or container under which the harness executes. Modeled as `component.type = "platform"` (1.7 explicitly clarifies that `platform` covers interpreters and runtime hosts). Properties:
 
-- `properties."cdx:agent:role" = "runtime"`
-- `properties."cdx:agent:runtime:kind"` — one of:
+- `properties."cdx:asbom:role" = "runtime"`
+- `properties."cdx:asbom:runtime:kind"` — one of:
   - `host-user-session` — running in the interactive user's OS session under the user's account
   - `agent-os-account` — running under a dedicated OS account (e.g., Windows 11 Agent Workspace)
   - `container` — running in a container with declared isolation
   - `vm` — running in a VM
   - `cloud-managed` — running in a vendor-managed agent runtime (Anthropic Managed Agents, etc.)
-- `properties."cdx:agent:runtime:isolation"` — free text, e.g., `none`, `os-account+acl`, `app-container`, `oci-container:user-namespace`, `hyperv-vm`, `vendor-attested`.
+- `properties."cdx:asbom:runtime:isolation"` — free text, e.g., `none`, `os-account+acl`, `app-container`, `oci-container:user-namespace`, `hyperv-vm`, `vendor-attested`.
 
 The runtime component MUST carry a `principal` whose `mode` is one of `agent-account-os`, `service-principal`, or `none`. The `mode = none` value is appropriate for `host-user-session` runtimes whose attribution is the user's existing OS identity rather than a distinct agent principal.
 
@@ -110,15 +113,15 @@ When the same credential is held by multiple components (e.g., a shared OAuth re
 
 ## 5. Composition pattern
 
-### 5.1 The agent-system composition
+### 5.1 The agentic-system composition
 
-Every conforming BOM MUST contain exactly one `composition` representing the agent system as a whole:
+Every conforming BOM MUST contain exactly one `composition` representing the agentic system as a whole:
 
 ```jsonc
 {
   "compositions": [
     {
-      "bom-ref": "comp:agent-system:claude-code-with-salesforce-skill",
+      "bom-ref": "comp:asbom:claude-code-with-salesforce-skill",
       "aggregate": "complete",
       "assemblies": [
         "comp:model:claude-opus-4-7",
@@ -138,7 +141,7 @@ The composition's `signature` (JSF) is what a fleet admin or registry attests wh
 
 ### 5.2 Dependencies
 
-`dependencies` SHOULD record the call relationships among agent-system parts:
+`dependencies` SHOULD record the call relationships among agentic-system parts:
 
 - harness `depends-on` model and skills
 - skills `depends-on` MCP servers they invoke
@@ -148,7 +151,7 @@ This produces a directed acyclic graph operators can walk for blast-radius queri
 
 ### 5.3 Formulation: how this composition was assembled
 
-The agent system's `formulation` captures the assembly process. The 1.7 release extended formulation to apply to "any referencable object within the BOM, including … the BOM itself," which is exactly the level this profile uses. Recommended structure:
+The agentic system's `formulation` captures the assembly process. The 1.7 release extended formulation to apply to "any referencable object within the BOM, including … the BOM itself," which is exactly the level ASBOM uses. Recommended structure:
 
 ```jsonc
 {
@@ -191,21 +194,21 @@ The `runtimeTopology` field is the load-bearing one: it lets a consumer reconstr
 
 ### 5.4 Property-bag fallback for `principal`
 
-For BOMs targeting consumers that have not adopted the [`principal` proposal](./proposal-principal-field.md), the same fields MAY be expressed under the `cdx:agent:principal:*` property namespace:
+For BOMs targeting consumers that have not adopted the [`principal` proposal](./proposal-principal-field.md), the same fields MAY be expressed under the `cdx:asbom:principal:*` property namespace:
 
 ```jsonc
 "properties": [
-  { "name": "cdx:agent:principal:mode", "value": "delegated-obo" },
-  { "name": "cdx:agent:principal:subject:kind", "value": "compound-user-and-client" },
-  { "name": "cdx:agent:principal:subject:identifier", "value": "alice@example.com + client:salesforce-mcp" },
-  { "name": "cdx:agent:principal:provider:name", "value": "salesforce" },
-  { "name": "cdx:agent:principal:provider:issuer", "value": "https://login.salesforce.com" },
-  { "name": "cdx:agent:principal:scopes", "value": "api refresh_token id" },
-  { "name": "cdx:agent:principal:credential:storage", "value": "os-keychain" },
-  { "name": "cdx:agent:principal:credential:lifetime", "value": "short-lived-oauth" },
-  { "name": "cdx:agent:principal:credential:replayProtection", "value": "dpop-bound" },
-  { "name": "cdx:agent:principal:consent:binding", "value": "per-grant" },
-  { "name": "cdx:agent:principal:attestation:level", "value": "idp-attested" }
+  { "name": "cdx:asbom:principal:mode", "value": "delegated-obo" },
+  { "name": "cdx:asbom:principal:subject:kind", "value": "compound-user-and-client" },
+  { "name": "cdx:asbom:principal:subject:identifier", "value": "alice@example.com + client:salesforce-mcp" },
+  { "name": "cdx:asbom:principal:provider:name", "value": "salesforce" },
+  { "name": "cdx:asbom:principal:provider:issuer", "value": "https://login.salesforce.com" },
+  { "name": "cdx:asbom:principal:scopes", "value": "api refresh_token id" },
+  { "name": "cdx:asbom:principal:credential:storage", "value": "os-keychain" },
+  { "name": "cdx:asbom:principal:credential:lifetime", "value": "short-lived-oauth" },
+  { "name": "cdx:asbom:principal:credential:replayProtection", "value": "dpop-bound" },
+  { "name": "cdx:asbom:principal:consent:binding", "value": "per-grant" },
+  { "name": "cdx:asbom:principal:attestation:level", "value": "idp-attested" }
 ]
 ```
 
@@ -213,7 +216,7 @@ Producers SHOULD prefer the structured `principal` block once the proposal lands
 
 ## 6. Attestation via `declarations`
 
-The profile uses CycloneDX 1.7 `declarations` for the third-party-assertion layer. Trust in an agent-system BOM derives from who signed which assertion about it, not from the artifact's self-description.
+ASBOM uses CycloneDX 1.7 `declarations` for the third-party-assertion layer. Trust in an ASBOM derives from who signed which assertion about it, not from the artifact's self-description.
 
 Minimum recommended declarations for a fleet-approved composition:
 
@@ -289,4 +292,4 @@ See [`example-claude-code-session.cdx.json`](./example-claude-code-session.cdx.j
 | Third-party attestation | declarations | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Non-repudiation properties | `principal.attestation` (proposed) | ✗ | ✗ | ✗ | ✗ | partial |
 
-The profile is best understood as the CycloneDX-side wiring that lets an agent system carry the equivalent of an in-toto principal predicate as an inline schema-validated block, signed alongside everything else in the BOM.
+ASBOM is best understood as the CycloneDX-side wiring that lets an agentic system carry the equivalent of an in-toto principal predicate as an inline schema-validated block, signed alongside everything else in the BOM.

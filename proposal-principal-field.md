@@ -10,7 +10,9 @@
 
 Add an optional `principal` object to `components` and `services` that describes the runtime identity under which the component executes, the credential mechanism that backs that identity, and the non-repudiation properties of the resulting audit trail.
 
-Today CycloneDX models *what a service exposes* (`services.endpoints`, `services.authenticated: bool`, `services.trustZone: string`) but not *what identity the service executes under* or *what credential it presents to downstream systems*. For agent systems — where components are increasingly distinguished by *whose authority they act with* rather than by what they technically do — this is the load-bearing missing field. Two skills that ostensibly "use GitHub" have radically different blast radii depending on whether they hold a long-lived PAT, an ambient CLI session, an OAuth on-behalf-of token, or a service-principal identity. The schema must say which.
+The field is the schema enabler for a proposed new BOM type — **[Agentic-System Bill of Materials (ASBOM)](./profile.md)** — but is itself generally useful for any composed system where components execute under distinct identities (CI pipelines with secrets, serverless function chains, multi-tenant SaaS components, etc.). The motivating domain is agentic AI, where the gap is most acute and the operator pain is most concrete; the primitive is not AI-specific.
+
+Today CycloneDX models *what a service exposes* (`services.endpoints`, `services.authenticated: bool`, `services.trustZone: string`) but not *what identity the service executes under* or *what credential it presents to downstream systems*. For agentic systems — where components are increasingly distinguished by *whose authority they act with* rather than by what they technically do — this is the load-bearing missing field. Two skills that ostensibly "use GitHub" have radically different blast radii depending on whether they hold a long-lived PAT, an ambient CLI session, an OAuth on-behalf-of token, or a service-principal identity. The schema must say which.
 
 ## The gap, concretely
 

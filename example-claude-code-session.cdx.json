@@ -21,8 +21,8 @@
       "url": ["https://example.corp"]
     },
     "properties": [
-      { "name": "cdx:profile",                          "value": "agent-system" },
-      { "name": "cdx:profile:agent-system:version",     "value": "0.1" }
+      { "name": "cdx:bomType",     "value": "asbom" },
+      { "name": "cdx:asbom:version", "value": "0.1" }
     ]
   },
 
@@ -58,8 +58,8 @@
         { "alg": "SHA-256", "content": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678901234567890abcdef012345" }
       ],
       "properties": [
-        { "name": "cdx:agent:role",            "value": "harness" },
-        { "name": "cdx:agent:harness:vendor",  "value": "anthropic" }
+        { "name": "cdx:asbom:role",            "value": "harness" },
+        { "name": "cdx:asbom:harness:vendor",  "value": "anthropic" }
       ],
       "principal": {
         "bom-ref": "principal:harness",
@@ -95,10 +95,10 @@
         { "type": "vcs", "url": "https://github.com/vendor-example/salesforce-export-skill" }
       ],
       "properties": [
-        { "name": "cdx:agent:role",          "value": "skill" },
-        { "name": "cdx:agent:skill:format",  "value": "agentskills.io/0.1" },
-        { "name": "cdx:agent:skill:source",  "value": "https://skills.internal.example.corp/vendor.salesforce-export@1.4.2" },
-        { "name": "cdx:agent:skill:digest",  "value": "sha256:7b4f8e2c0a1d9b6e3f5c8a2d4e6f8013579bdf2468ace0123456789abcdef0123" }
+        { "name": "cdx:asbom:role",          "value": "skill" },
+        { "name": "cdx:asbom:skill:format",  "value": "agentskills.io/0.1" },
+        { "name": "cdx:asbom:skill:source",  "value": "https://skills.internal.example.corp/vendor.salesforce-export@1.4.2" },
+        { "name": "cdx:asbom:skill:digest",  "value": "sha256:7b4f8e2c0a1d9b6e3f5c8a2d4e6f8013579bdf2468ace0123456789abcdef0123" }
       ],
       "principal": {
         "bom-ref": "principal:skill",
@@ -123,10 +123,10 @@
       "version": "10.0.26100.7344",
       "supplier": { "name": "Microsoft" },
       "properties": [
-        { "name": "cdx:agent:role",                 "value": "runtime" },
-        { "name": "cdx:agent:runtime:kind",         "value": "agent-os-account" },
-        { "name": "cdx:agent:runtime:isolation",    "value": "os-account+acl+app-container" },
-        { "name": "cdx:agent:runtime:hostFolders",  "value": "Documents Downloads Desktop Music Pictures Videos" }
+        { "name": "cdx:asbom:role",                 "value": "runtime" },
+        { "name": "cdx:asbom:runtime:kind",         "value": "agent-os-account" },
+        { "name": "cdx:asbom:runtime:isolation",    "value": "os-account+acl+app-container" },
+        { "name": "cdx:asbom:runtime:hostFolders",  "value": "Documents Downloads Desktop Music Pictures Videos" }
       ],
       "principal": {
         "bom-ref": "principal:runtime",
@@ -158,7 +158,7 @@
         { "flow": "bi-directional", "classification": "confidential" }
       ],
       "properties": [
-        { "name": "cdx:agent:role", "value": "external-api" }
+        { "name": "cdx:asbom:role", "value": "external-api" }
       ]
     },
 
@@ -175,8 +175,8 @@
         { "flow": "bi-directional", "classification": "confidential" }
       ],
       "properties": [
-        { "name": "cdx:agent:role",          "value": "mcp-server" },
-        { "name": "cdx:agent:mcp:transport", "value": "streamable-http" }
+        { "name": "cdx:asbom:role",          "value": "mcp-server" },
+        { "name": "cdx:asbom:mcp:transport", "value": "streamable-http" }
       ],
       "principal": {
         "bom-ref": "principal:mcp",
@@ -212,7 +212,7 @@
         { "flow": "bi-directional", "classification": "confidential" }
       ],
       "properties": [
-        { "name": "cdx:agent:role", "value": "external-api" }
+        { "name": "cdx:asbom:role", "value": "external-api" }
       ]
     }
   ],
@@ -225,7 +225,7 @@
 
   "compositions": [
     {
-      "bom-ref": "comp:agent-system:claude-code-with-salesforce-skill",
+      "bom-ref": "comp:asbom:claude-code-with-salesforce-skill",
       "aggregate": "complete",
       "assemblies": [
         "comp:model:claude-opus-4-7",
@@ -313,7 +313,7 @@
             "requirement": "policy:no-pat-credentials-in-env-or-file",
             "claims": [
               {
-                "subjects": ["comp:agent-system:claude-code-with-salesforce-skill"],
+                "subjects": ["comp:asbom:claude-code-with-salesforce-skill"],
                 "predicate": "no component or service in the composition has principal.mode=pat with credential.storage in (env-var, file)"
               }
             ],
